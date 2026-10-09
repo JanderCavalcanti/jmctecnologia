@@ -143,9 +143,8 @@ p { margin: 0 0 1em; }
 
 /* Rodapé */
 .site-footer { background: #1a1a1a; color: #cbd5e1; padding: 32px 0; font-size: .9rem; }
-.footer-inner { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
 .site-footer p { margin: 0; }
-.site-footer strong { color: #fff; }
+.site-footer .footer-name { margin-top: 10px; }
 
 /* Responsivo */
 @media (max-width: 900px) {
@@ -172,3 +171,37 @@ p { margin: 0 0 1em; }
   html { scroll-behavior: auto; }
   * { transition: none !important; }
 }
+
+/* Cabeçalho: logo só com ícone, item ativo e botão WhatsApp */
+.menu a[aria-current="page"] { color: var(--accent-text); font-weight: 600; }
+.btn-whatsapp { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-whatsapp svg { width: 18px; height: 18px; fill: currentColor; }
+
+/* Páginas internas */
+.page-hero {
+  padding: 72px 0 48px;
+  background: radial-gradient(circle at 85% 20%, rgba(255,153,0,.16), transparent 45%), var(--bg-alt);
+}
+.empty-state { text-align: center; max-width: 560px; margin: 0 auto; }
+.empty-state p { color: var(--muted); }
+.card { display: flex; flex-direction: column; }
+.card-action { align-self: flex-start; margin-top: 20px; }
+.card-muted { background: var(--bg-alt); box-shadow: none; }
+.badge {
+  align-self: flex-start; margin-top: 20px; padding: 4px 12px; border-radius: 999px;
+  background: var(--primary); color: #fff; font-size: .8rem; font-weight: 600;
+}
+
+/* Rodapé com contatos */
+.footer-grid { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; padding-bottom: 24px; }
+.footer-name { color: #fff; font-weight: 600; margin-top: 10px; }
+.footer-contacts { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.footer-contacts a { text-decoration: none; color: #cbd5e1; display: inline-flex; align-items: center; gap: 8px; }
+.footer-contacts a:hover { color: var(--accent); }
+.social svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
+.social svg .fill { fill: currentColor; stroke: none; }
+.footer-bottom { border-top: 1px solid rgba(255,255,255,.1); padding-top: 20px; }
+@media (max-width: 1000px) and (min-width: 721px) {
+  .menu { gap: 18px; font-size: .95rem; }
+}
+.footer-grid img { background: #fff; padding: 6px 8px; border-radius: 10px; box-sizing: content-box; }

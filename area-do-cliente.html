@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Área do cliente | JMC Tecnologia e Consultoria</title>
-  <meta name="description" content="Área do cliente da JMC Tecnologia e Consultoria: suporte e atendimento para clientes.">
+  <meta name="description" content="Área do cliente da JMC Tecnologia e Consultoria: login de clientes com Google ou Microsoft.">
   <meta property="og:title" content="Área do cliente | JMC Tecnologia e Consultoria">
   <meta property="og:description" content="Tecnologia que impulsiona o seu negócio.">
   <meta property="og:url" content="https://www.jmctecnologia.com.br/area-do-cliente.html">
@@ -43,28 +43,48 @@
       <div class="container">
         <p class="eyebrow">Área do cliente</p>
         <h1>Atendimento para clientes JMC</h1>
-        <p class="lead">Precisa de suporte? Escolha o canal abaixo. Nosso portal do cliente, com abertura e acompanhamento de chamados, está em construção.</p>
+        <p class="lead">Entre com a sua conta Google ou Microsoft para acessar a sua área.</p>
       </div>
     </section>
 
     <section class="section">
       <div class="container">
-        <div class="cards">
-          <article class="card">
-            <h3>Suporte pelo WhatsApp</h3>
-            <p>Fale direto com a nossa equipe para dúvidas e chamados urgentes.</p>
-            <a class="btn btn-sm card-action" href="https://wa.me/5592984821419?text=Ol%C3%A1%21%20Vim%20pelo%20site%20da%20JMC%20Tecnologia." target="_blank" rel="noopener">Abrir conversa</a>
-          </article>
-          <article class="card">
-            <h3>Suporte por e-mail</h3>
-            <p>Envie a descrição do problema, prints e o nome da sua empresa.</p>
-            <a class="btn btn-sm btn-ghost card-action" href="mailto:jander.cavalcanti@gmail.com?subject=Suporte%20JMC">Enviar e-mail</a>
-          </article>
-          <article class="card card-muted">
-            <h3>Portal do cliente</h3>
-            <p>Em breve: login, abertura de chamados, histórico de atendimentos e documentos.</p>
-            <span class="badge">Em breve</span>
-          </article>
+        <!-- Visitante: botões de login -->
+        <div class="login-box" id="login-box">
+          <h2>Entrar</h2>
+          <p>Use a conta que você já usa no trabalho.</p>
+          <button type="button" class="btn-provider" data-provider="google"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.5 5.5 0 0 1-2.4 3.6v3h3.9c2.2-2.1 3.5-5.2 3.5-8.8z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3a7.2 7.2 0 0 1-10.8-3.8h-4v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6h-4a12 12 0 0 0 0 10.8z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.4.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1A7.2 7.2 0 0 1 12 4.8z"/></svg>Entrar com Google</button>
+          <button type="button" class="btn-provider" data-provider="microsoft"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#F25022" d="M1 1h10.5v10.5H1z"/><path fill="#7FBA00" d="M12.5 1H23v10.5H12.5z"/><path fill="#00A4EF" d="M1 12.5h10.5V23H1z"/><path fill="#FFB900" d="M12.5 12.5H23V23H12.5z"/></svg>Entrar com Microsoft</button>
+          <p class="login-msg" id="login-msg" role="status" aria-live="polite"></p>
+        </div>
+
+        <!-- Cliente logado: painel -->
+        <div class="client-panel" id="client-panel" hidden>
+          <div class="client-head">
+            <img id="client-photo" alt="" width="56" height="56" hidden>
+            <div>
+              <h2>Olá, <span id="client-name">cliente</span>!</h2>
+              <p id="client-email"></p>
+            </div>
+            <button type="button" class="btn btn-sm btn-ghost" id="logout">Sair</button>
+          </div>
+          <div class="cards">
+            <article class="card">
+              <h3>Suporte pelo WhatsApp</h3>
+              <p>Fale direto com a nossa equipe para dúvidas e chamados urgentes.</p>
+              <a class="btn btn-sm card-action" href="https://wa.me/5592984821419?text=Ol%C3%A1%21%20Vim%20pelo%20site%20da%20JMC%20Tecnologia." target="_blank" rel="noopener">Abrir conversa</a>
+            </article>
+            <article class="card">
+              <h3>Suporte por e-mail</h3>
+              <p>Envie a descrição do problema, prints e o nome da sua empresa.</p>
+              <a class="btn btn-sm btn-ghost card-action" href="mailto:jander.cavalcanti@gmail.com?subject=Suporte%20JMC">Enviar e-mail</a>
+            </article>
+            <article class="card card-muted">
+              <h3>Chamados e documentos</h3>
+              <p>Em breve: abertura de chamados, histórico de atendimentos e documentos.</p>
+              <span class="badge">Em breve</span>
+            </article>
+          </div>
         </div>
       </div>
     </section>
@@ -89,5 +109,6 @@
   </footer>
 
   <script src="assets/js/main.js"></script>
+  <script type="module" src="assets/js/area-do-cliente.js"></script>
 </body>
 </html>

@@ -13,7 +13,7 @@ O login usa o **Firebase Authentication** (Google), gratuito para este volume de
 2. Aba **Sign-in method → Adicionar novo provedor → Google**.
 3. Ative, escolha o e-mail de suporte e salve.
 
-## 3. Ativar o login com Microsoft
+## 3. Ativar o login com Microsoft (opcional, pode ficar para depois)
 1. No Firebase, em **Sign-in method → Adicionar novo provedor → Microsoft**, ative e **copie a URL de callback** mostrada (algo como `https://jmc-tecnologia.firebaseapp.com/__/auth/handler`). Deixe a tela aberta.
 2. Em outra aba, acesse https://entra.microsoft.com (ou portal.azure.com) com uma conta Microsoft.
 3. **Identidade → Aplicativos → Registros de aplicativo → Novo registro**:
@@ -32,7 +32,7 @@ Em **Authentication → Settings → Domínios autorizados**, adicione:
 - `www.jmctecnologia.com.br` e `jmctecnologia.com.br` (para quando o domínio for apontado)
 
 ## 5. Ligar no site
-Preencha `assets/js/firebase-config.js` com os valores do passo 1 (ou envie os quatro valores para quem mantém o site). Depois de publicado, os botões da Área do cliente passam a funcionar.
+Preencha `assets/js/firebase-config.js` com os valores do passo 1 (ou envie os quatro valores para quem mantém o site). Em `loginProviders`, deixe só os provedores ativados no Firebase: `['google']` mostra apenas o botão do Google; `['google', 'microsoft']` mostra os dois. Depois de publicado, os botões da Área do cliente passam a funcionar.
 
 ## Observação
 Por enquanto **qualquer pessoa** com conta Google ou Microsoft consegue entrar e ver o painel, que só mostra canais de suporte. Para liberar conteúdo exclusivo (chamados, documentos), o próximo passo é guardar os dados no Firebase com regras que permitam acesso só aos e-mails dos clientes cadastrados.

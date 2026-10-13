@@ -1,12 +1,16 @@
 // Login de clientes com Google ou Microsoft via Firebase Authentication.
-import { firebaseConfig } from './firebase-config.js';
+import { firebaseConfig, loginProviders } from './firebase-config.js';
 
 const SDK = 'https://www.gstatic.com/firebasejs/10.12.2';
 
 const loginBox = document.getElementById('login-box');
 const panel = document.getElementById('client-panel');
 const msg = document.getElementById('login-msg');
-const buttons = loginBox.querySelectorAll('[data-provider]');
+const buttons = [...loginBox.querySelectorAll('[data-provider]')].filter((b) => {
+  const active = loginProviders.includes(b.dataset.provider);
+  b.hidden = !active;
+  return active;
+});
 
 const ERROS = {
   'auth/popup-closed-by-user': 'A janela de login foi fechada antes de concluir.',

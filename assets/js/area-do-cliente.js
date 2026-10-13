@@ -28,16 +28,14 @@ function showUser(user) {
   document.getElementById('client-name').textContent = (user.displayName || user.email || 'cliente').split(' ')[0];
   document.getElementById('client-email').textContent = user.email || '';
   const photo = document.getElementById('client-photo');
-  if (user.photoURL) {
-    photo.src = user.photoURL;
-    photo.hidden = false;
-  }
+  photo.hidden = !user.photoURL;
+  if (user.photoURL) photo.src = user.photoURL;
 }
 
 async function start() {
   if (!firebaseConfig.apiKey) {
     buttons.forEach((b) => (b.disabled = true));
-    showMessage('O login ainda está sendo configurado. Enquanto isso, fale com a gente pelo WhatsApp.');
+    showMessage('O login ainda está sendo configurado. Enquanto isso, use os canais de suporte abaixo.');
     return;
   }
 

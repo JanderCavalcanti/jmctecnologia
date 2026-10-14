@@ -64,9 +64,10 @@ export function pedirCadastro(fs, db, user, dados) {
     campo('documento').value = mascaraDocumento(dados.documento);
     campo('telefone').value = mascaraTelefone(dados.telefone);
     campo('cep').value = mascaraCep(dados.cep);
-    ['nome', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'uf'].forEach((k) => (campo(k).value = dados[k] || ''));
-  } else if (user.displayName) {
-    campo('nome').value = user.displayName;
+    ['nome', 'contato', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'uf'].forEach((k) => (campo(k).value = dados[k] || ''));
+  } else {
+    // Prévia vinda da conta Google; o cliente pode trocar.
+    campo('contato').value = user.displayName || '';
   }
   cancelar.hidden = !dados;
 
@@ -123,6 +124,7 @@ export function pedirCadastro(fs, db, user, dados) {
       const doc = digitos(campo('documento').value);
       if (doc.length === 11 ? !cpfValido(doc) : doc.length === 14 ? !cnpjValido(doc) : true) marcar('documento', 'CPF ou CNPJ inválido');
       if (campo('nome').value.trim().length < 3) marcar('nome', doc.length === 14 ? 'informe a razão social' : 'informe o nome completo');
+      if (campo('contato').value.trim().length < 2) marcar('contato', 'informe o nome para contato');
       if (digitos(campo('cep').value).length !== 8) marcar('cep', 'CEP incompleto');
       ['logradouro', 'numero', 'bairro', 'cidade'].forEach((k) => {
         if (!campo(k).value.trim()) marcar(k, `preencha ${campo(k).dataset.nome}`);
@@ -156,6 +158,7 @@ export function pedirCadastro(fs, db, user, dados) {
         tipo: doc.length === 14 ? 'PJ' : 'PF',
         documento: doc,
         nome: campo('nome').value.trim(),
+        contato: campo('contato').value.trim(),
         cep: digitos(campo('cep').value),
         logradouro: campo('logradouro').value.trim(),
         numero: campo('numero').value.trim(),

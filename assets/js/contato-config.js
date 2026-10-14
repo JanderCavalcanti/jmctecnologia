@@ -1,7 +1,5 @@
-// Chave de acesso do Web3Forms (https://web3forms.com), que entrega as mensagens do formulário por e-mail.
-// A chave pode ficar pública: ela só permite enviar mensagens para o e-mail cadastrado.
-// Enquanto estiver vazia, o formulário abre o e-mail do visitante com a mensagem pronta.
-export const web3formsKey = '';
-
-// Para onde vai a mensagem quando a chave ainda não foi configurada.
+// E-mail que recebe as mensagens do formulário de contato.
+// O envio usa o FormSubmit (https://formsubmit.co), que não precisa de cadastro.
+// Na primeira mensagem, o FormSubmit manda para este e-mail um pedido de ativação:
+// é só clicar em "Activate Form". Depois disso, as mensagens chegam direto.
 export const emailContato = 'jander.cavalcanti@gmail.com';

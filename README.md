@@ -22,4 +22,4 @@ Configuração única no GitHub: **Settings → Pages → Build and deployment �
 
 ## Formulário de contato
 
-O formulário da página inicial envia as mensagens por e-mail usando o [Web3Forms](https://web3forms.com) (gratuito até 250 mensagens por mês). A chave fica em `assets/js/contato-config.js`. Enquanto ela estiver vazia, o formulário abre o programa de e-mail do visitante com a mensagem pronta.
+O formulário da página inicial envia as mensagens para o e-mail definido em `assets/js/contato-config.js`, usando o [FormSubmit](https://formsubmit.co) (gratuito, sem cadastro). O assunto chega como `[JMC] Contato <empresa>` (ou o nome, se a empresa ficar em branco). Na primeira mensagem, o FormSubmit pede a ativação por e-mail.

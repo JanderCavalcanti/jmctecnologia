@@ -341,3 +341,41 @@ p { margin: 0 0 1em; }
   .cadastro-box { padding: 24px 18px; }
   .cadastro-form { grid-template-columns: 1fr; }
 }
+
+/* Painel JMC: menu lateral e lista de clientes */
+.crm-admin { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 32px; align-items: start; margin-top: 24px; }
+.crm-admin[hidden] { display: none; }
+.crm-nav {
+  position: sticky; top: 96px; display: grid; gap: 4px;
+  background: var(--bg-alt); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px;
+}
+.crm-nav-titulo { margin: 4px 10px 8px; font-size: .78rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.crm-nav a {
+  display: block; padding: 10px 12px; border-radius: 10px; border-left: 3px solid transparent;
+  color: var(--ink); font-weight: 600; text-decoration: none;
+}
+.crm-nav a:hover { background: #fff; }
+.crm-nav a[aria-current="page"] { background: #fff; border-left-color: var(--accent); color: var(--accent-text); }
+.crm-conteudo .crm { margin-top: 0; }
+.crm-cabeca { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+.crm-cabeca h3 { margin: 0; }
+.crm-cabeca input[type="search"] {
+  font: inherit; width: min(100%, 340px); padding: 8px 12px; border: 1px solid #cfcac3; border-radius: 10px;
+}
+.tabela-rolagem { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; }
+.tabela-rolagem:has(.tabela[hidden]) { display: none; }
+.tabela { width: 100%; border-collapse: collapse; font-size: .92rem; }
+.tabela th, .tabela td { padding: 12px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); }
+.tabela th { background: var(--bg-alt); font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); white-space: nowrap; }
+.tabela tbody tr:last-child td { border-bottom: 0; }
+.tabela tbody tr:hover { background: #fcfbf9; }
+.tabela-sub { display: block; color: var(--muted); font-size: .85rem; }
+.tabela-sub a { color: inherit; }
+.tabela-num { white-space: nowrap; font-variant-numeric: tabular-nums; }
+@media (max-width: 860px) {
+  .crm-admin { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .crm-nav { position: static; display: flex; gap: 6px; padding: 6px; overflow-x: auto; }
+  .crm-nav-titulo { display: none; }
+  .crm-nav a { border-left: 0; border-bottom: 3px solid transparent; white-space: nowrap; }
+  .crm-nav a[aria-current="page"] { border-bottom-color: var(--accent); }
+}

@@ -29,7 +29,8 @@ Para dar acesso a outra pessoa da JMC, crie outro documento em `admins` com o e-
 
 ## Cadastro do cliente no primeiro acesso
 No primeiro login, antes de ver o painel, o cliente preenche: CPF ou CNPJ (com máscara e validação),
-nome completo ou razão social (o rótulo muda conforme o documento), telefone e endereço. Ao digitar o CEP,
+nome completo ou razão social (o rótulo muda conforme o documento), nome para contato (já vem com o nome
+da conta Google), telefone e endereço. Ao digitar o CEP,
 logradouro, bairro, cidade e estado são preenchidos pelo ViaCEP. Depois ele pode corrigir pelo botão **Meus dados**.
 
 Os dados ficam na coleção `clientes` (um documento por login, com o e-mail do cliente) e você vê tudo pelo

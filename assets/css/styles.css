@@ -240,7 +240,6 @@ p { margin: 0 0 1em; }
   padding: 28px; box-shadow: 0 20px 40px rgba(0,0,0,.25);
 }
 .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
-.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .field label { font-weight: 600; font-size: .92rem; }
 .field input, .field textarea {
   font: inherit; color: var(--ink); background: #fff;
@@ -261,6 +260,5 @@ p { margin: 0 0 1em; }
   .contact-grid { grid-template-columns: 1fr; gap: 32px; }
 }
 @media (max-width: 520px) {
-  .field-row { grid-template-columns: 1fr; gap: 0; }
   .contact-form { padding: 22px 18px; }
 }

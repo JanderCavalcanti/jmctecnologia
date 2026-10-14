@@ -24,6 +24,7 @@ jobs:
         with:
           ref: main
           path: main
+          fetch-depth: 0
 
       - name: Baixar a teste
         run: |
@@ -33,6 +34,17 @@ jobs:
 
       - name: Montar o site
         run: |
+          # Versão no rodapé: número do arquivo VERSION (na teste, também o commit)
+          versao() {
+            v="$(tr -d '[:space:]' < "$1/VERSION" 2>/dev/null || true)"
+            echo "${v:-dev}$2"
+          }
+          carimbar() {
+            for f in "$1"/*.html; do
+              sed -i "s#<span data-versao>[^<]*</span>#<span data-versao>$2</span>#" "$f"
+            done
+          }
+
           cp -r main site
           rm -rf site/.git site/.github site/docs site/supabase
 
@@ -46,7 +58,22 @@ jobs:
             done
           fi
 
+          carimbar site "$(versao main)"
+          if [ -d teste ]; then
+            carimbar site/teste "$(versao teste " (teste $(git -C teste rev-parse --short HEAD))")"
+          fi
+
           touch site/.nojekyll
+
+      - name: Marcar a versão com uma tag
+        if: github.ref_name == 'main'
+        run: |
+          cd main
+          v="$(tr -d '[:space:]' < VERSION 2>/dev/null || true)"
+          if [ -n "$v" ] && ! git rev-parse -q --verify "refs/tags/v$v" >/dev/null; then
+            git tag "v$v"
+            git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" "v$v"
+          fi
 
       - name: Enviar para a branch gh-pages
         run: |

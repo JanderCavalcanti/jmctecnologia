@@ -9,6 +9,11 @@ Padrão MAJOR.MINOR.PATCH:
 
 Ao publicar na `main`, o site ganha a tag `vX.Y.Z` no GitHub.
 
+## 1.0.1 (2026-10-14)
+
+- Área do cliente: o login Google voltava para a tela de login sem entrar; corrigido no Supabase da VPS.
+- Área do cliente: ao entrar, o Google sempre pergunta qual conta usar.
+
 ## 1.0.0 (2026-10-14)
 
 Primeira versão numerada, com o que já está no ar:

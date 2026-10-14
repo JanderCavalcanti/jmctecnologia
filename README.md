@@ -18,6 +18,8 @@ O site é publicado pelo GitHub Actions (`.github/workflows/publicar.yml`) na br
 - **Teste:** tudo que entra na branch `teste` aparece em `/teste/` (ex.: https://jandercavalcanti.github.io/jmctecnologia/teste/), com um aviso de "Ambiente de teste" no topo e fora dos buscadores.
 - **Oficial:** depois de aprovado, o PR entra na `main` e a mudança vai para a raiz do site (e para www.jmctecnologia.com.br quando o domínio estiver apontado).
 
+- **Versão:** o número fica em `VERSION` e a publicação o coloca no rodapé de todas as páginas (na teste, junto com o commit). Ao mudar o site, suba o número e registre a mudança em `CHANGELOG.md`. Cada versão publicada na `main` ganha a tag `vX.Y.Z`.
+
 Configuração única no GitHub: **Settings → Pages → Build and deployment → Deploy from a branch → `gh-pages` / `(root)`**.
 
 ## Formulário de contato

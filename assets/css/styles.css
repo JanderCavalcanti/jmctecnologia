@@ -195,6 +195,7 @@ p { margin: 0 0 1em; }
 /* Rodapé com contatos */
 .footer-grid { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; padding-bottom: 24px; }
 .footer-name { color: #fff; font-weight: 600; margin-top: 10px; }
+.site-footer .footer-version { color: #94a3b8; font-size: .8rem; margin-top: 4px; }
 .footer-contacts { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .footer-contacts a { text-decoration: none; color: #cbd5e1; display: inline-flex; align-items: center; gap: 8px; }
 .footer-contacts a:hover { color: var(--accent); }

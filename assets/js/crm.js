@@ -8,6 +8,8 @@ export const ETAPAS = [
   { chave: 'contrato', nome: 'Contrato assinado', status: 'Contrato assinado' },
 ];
 
+import { pedirCadastro } from './cadastro.js';
+
 const SDK = 'https://www.gstatic.com/firebasejs/10.12.2';
 
 const el = (tag, attrs = {}, ...filhos) => {
@@ -77,7 +79,27 @@ export async function iniciarCRM(app, user) {
   }
   admin.hidden = !ehAdmin;
   area.hidden = ehAdmin;
-  if (ehAdmin) return iniciarAdmin(fs, db);
+  const painel = document.getElementById('client-panel');
+  const meusDados = document.getElementById('meus-dados');
+  meusDados.hidden = ehAdmin;
+  if (ehAdmin) {
+    painel.hidden = false;
+    return iniciarAdmin(fs, db);
+  }
+
+  // Primeiro acesso: o cliente preenche o cadastro antes de ver o painel.
+  const ref = fs.doc(db, 'clientes', user.uid);
+  let cadastro = (await fs.getDoc(ref)).data();
+  if (!cadastro) cadastro = await pedirCadastro(fs, db, user, null);
+  painel.hidden = false;
+
+  const editar = async () => {
+    painel.hidden = true;
+    cadastro = (await pedirCadastro(fs, db, user, cadastro)) || cadastro;
+    painel.hidden = false;
+  };
+  meusDados.addEventListener('click', editar);
+  parar.push(() => meusDados.removeEventListener('click', editar));
 
   msg.textContent = 'Carregando suas propostas...';
   const q = fs.query(fs.collection(db, 'propostas'), fs.where('clienteEmail', '==', email));

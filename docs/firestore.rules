@@ -21,6 +21,16 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Cadastro do cliente (preenchido no primeiro acesso): cada um lê e edita só o próprio.
+    match /clientes/{uid} {
+      allow read: if admin() || (logado() && request.auth.uid == uid);
+      allow create, update: if admin() || (logado() && request.auth.uid == uid
+        && request.resource.data.email == meuEmail()
+        && request.resource.data.documento is string
+        && request.resource.data.documento.size() in [11, 14]);
+      allow delete: if admin();
+    }
+
     // Propostas: o cliente lê só as do próprio e-mail; só administradores gravam.
     match /propostas/{id} {
       allow read: if admin() || (logado() && resource.data.clienteEmail == meuEmail());

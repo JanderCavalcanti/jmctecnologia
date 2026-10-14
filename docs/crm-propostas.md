@@ -27,6 +27,14 @@ As regras garantem que cada cliente lê só as próprias propostas e que só adm
 O e-mail de administrador fica só no Firebase; não aparece no código do site.
 Para dar acesso a outra pessoa da JMC, crie outro documento em `admins` com o e-mail dela.
 
+## Cadastro do cliente no primeiro acesso
+No primeiro login, antes de ver o painel, o cliente preenche: CPF ou CNPJ (com máscara e validação),
+nome completo ou razão social (o rótulo muda conforme o documento), telefone e endereço. Ao digitar o CEP,
+logradouro, bairro, cidade e estado são preenchidos pelo ViaCEP. Depois ele pode corrigir pelo botão **Meus dados**.
+
+Os dados ficam na coleção `clientes` (um documento por login, com o e-mail do cliente) e você vê tudo pelo
+console do Firebase. Administradores não passam por essa tela.
+
 ## Usar no dia a dia
 1. Entre na Área do cliente com o e-mail de administrador. Aparece o **Painel JMC**.
 2. Cadastre a proposta com o **e-mail que o cliente usa no login Google**, a empresa e o título.

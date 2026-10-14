@@ -65,7 +65,11 @@ async function start() {
       buttons.forEach((b) => (b.disabled = true));
       const { error } = await sb.auth.signInWithOAuth({
         provider: PROVEDORES[button.dataset.provider],
-        options: { redirectTo: location.origin + location.pathname },
+        options: {
+          redirectTo: location.origin + location.pathname,
+          // Sempre pergunta qual conta usar, em vez de entrar direto na última
+          queryParams: { prompt: 'select_account' },
+        },
       });
       if (error) {
         console.error(error);

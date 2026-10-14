@@ -34,11 +34,11 @@ jobs:
       - name: Montar o site
         run: |
           cp -r main site
-          rm -rf site/.git site/.github site/docs
+          rm -rf site/.git site/.github site/docs site/supabase
 
           if [ -d teste ]; then
             cp -r teste site/teste
-            rm -rf site/teste/.git site/teste/.github site/teste/docs site/teste/CNAME
+            rm -rf site/teste/.git site/teste/.github site/teste/docs site/teste/supabase site/teste/CNAME
             # Ambiente de teste: fora dos buscadores e com aviso no topo
             for f in site/teste/*.html; do
               sed -i 's#<head>#<head>\n  <meta name="robots" content="noindex, nofollow">#' "$f"

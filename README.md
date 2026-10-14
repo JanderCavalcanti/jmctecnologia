@@ -4,7 +4,7 @@ Landing page institucional de www.jmctecnologia.com.br. Site estático (HTML, CS
 
 - `index.html`: página inicial
 - `blog.html`: blog (em breve)
-- `area-do-cliente.html`: área do cliente com canais de suporte e login Google/Microsoft (Firebase); configuração em `docs/login-cliente.md` e `assets/js/firebase-config.js`
+- `area-do-cliente.html`: área do cliente com login Google (Supabase), cadastro do cliente, status das propostas e canais de suporte; instalação em `docs/supabase-easypanel.md`, banco em `supabase/schema.sql`, conexão em `assets/js/supabase-config.js`, uso em `docs/crm-propostas.md`
 - `assets/css/styles.css`: estilos; as cores da marca (laranja `#ff9900` e grafite `#404040`) ficam nas variáveis do topo
 - `assets/img/`: logotipo (`logo.png`) e ícones
 - Domínio próprio: o arquivo `CNAME` (www.jmctecnologia.com.br) entra quando o DNS for apontado para o GitHub Pages

@@ -19,3 +19,7 @@ O site é publicado pelo GitHub Actions (`.github/workflows/publicar.yml`) na br
 - **Oficial:** depois de aprovado, o PR entra na `main` e a mudança vai para a raiz do site (e para www.jmctecnologia.com.br quando o domínio estiver apontado).
 
 Configuração única no GitHub: **Settings → Pages → Build and deployment → Deploy from a branch → `gh-pages` / `(root)`**.
+
+## Formulário de contato
+
+O formulário da página inicial envia as mensagens para o e-mail definido em `assets/js/contato-config.js`, usando o [FormSubmit](https://formsubmit.co) (gratuito, sem cadastro). O assunto chega como `[JMC] Contato <empresa>` (ou o nome, se a empresa ficar em branco). Na primeira mensagem, o FormSubmit pede a ativação por e-mail.

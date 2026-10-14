@@ -1,7 +1,7 @@
 // Mini CRM da Área do cliente: status das propostas no Supabase (Postgres).
 // Cliente vê só as propostas ligadas ao próprio e-mail; administradores (tabela "admins")
 // cadastram propostas e mudam a etapa. Quem garante isso são as regras em supabase/schema.sql.
-import { pedirCadastro } from './cadastro.js';
+import { pedirCadastro, mascaraDocumento, mascaraTelefone } from './cadastro.js';
 
 export const ETAPAS = [
   { chave: 'proposta', nome: 'Proposta comercial', status: 'Proposta comercial em análise' },
@@ -77,12 +77,13 @@ export async function iniciarCRM(sb, user) {
   const painel = document.getElementById('client-panel');
   const meusDados = document.getElementById('meus-dados');
 
-  const { data: adm, error: erroAdm } = await sb.from('admins').select('email').maybeSingle();
+  // Administrador (tabela "admins") vai direto ao Painel JMC, sem o cadastro de cliente.
+  const { data: ehAdmin, error: erroAdm } = await sb.rpc('eh_admin');
   if (erroAdm) throw erroAdm;
-  const ehAdmin = !!adm;
   admin.hidden = !ehAdmin;
-  area.hidden = ehAdmin;
-  meusDados.hidden = ehAdmin;
+  area.hidden = !!ehAdmin;
+  meusDados.hidden = !!ehAdmin;
+  document.getElementById('cards-cliente').hidden = !!ehAdmin;
   if (ehAdmin) {
     painel.hidden = false;
     return iniciarAdmin(sb);
@@ -112,7 +113,83 @@ export async function iniciarCRM(sb, user) {
   });
 }
 
+// Menu lateral do Painel JMC: cada item mostra a sua seção; o endereço guarda a seção aberta.
+function navegacao(aoAbrir) {
+  const links = [...document.querySelectorAll('.crm-nav a[data-secao]')];
+  const abrir = () => {
+    const pedida = location.hash.slice(1);
+    const secao = links.some((a) => a.dataset.secao === pedida) ? pedida : links[0].dataset.secao;
+    links.forEach((a) => {
+      const ativa = a.dataset.secao === secao;
+      if (ativa) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
+      document.getElementById(`secao-${a.dataset.secao}`).hidden = !ativa;
+    });
+    aoAbrir(secao);
+  };
+  abrir();
+  window.addEventListener('hashchange', abrir);
+  parar.push(() => window.removeEventListener('hashchange', abrir));
+}
+
+// Lista de clientes cadastrados, com busca e o número de propostas de cada um.
+function listaClientes(sb) {
+  const corpo = document.getElementById('clientes-lista');
+  const tabela = document.getElementById('clientes-tabela');
+  const msg = document.getElementById('clientes-msg');
+  const busca = document.getElementById('clientes-busca');
+  const emails = document.getElementById('clientes-emails');
+  let clientes = [];
+  let porEmail = new Map();
+
+  const texto = (c) => [c.nome, c.contato, c.email, c.documento, mascaraDocumento(c.documento), c.cidade, c.uf]
+    .join(' ').toLowerCase();
+
+  const desenhar = () => {
+    const termo = busca.value.trim().toLowerCase();
+    const vistos = clientes.filter((c) => !termo || texto(c).includes(termo));
+    corpo.replaceChildren(...vistos.map((c) => el('tr', {},
+      el('td', {}, el('strong', {}, c.nome), el('span', { class: 'tabela-sub' }, c.tipo === 'PJ' ? 'Pessoa jurídica' : 'Pessoa física')),
+      el('td', { class: 'tabela-num' }, mascaraDocumento(c.documento)),
+      el('td', {}, c.contato,
+        el('span', { class: 'tabela-sub' }, el('a', { href: `mailto:${c.email}` }, c.email)),
+        el('span', { class: 'tabela-sub' }, el('a', { href: `https://wa.me/55${c.telefone}`, target: '_blank', rel: 'noopener' }, mascaraTelefone(c.telefone)))),
+      el('td', {}, `${c.cidade}/${c.uf}`),
+      el('td', { class: 'tabela-num' }, String(porEmail.get(c.email.toLowerCase()) || 0)),
+      el('td', { class: 'tabela-num' }, formatarData(c.criado_em)))));
+    tabela.hidden = !vistos.length;
+    msg.textContent = !clientes.length ? 'Nenhum cliente completou o cadastro ainda.'
+      : !vistos.length ? 'Nenhum cliente encontrado.'
+      : `${vistos.length} de ${clientes.length} cliente${clientes.length > 1 ? 's' : ''}`;
+  };
+  busca.addEventListener('input', desenhar);
+  parar.push(() => busca.removeEventListener('input', desenhar));
+
+  return {
+    async carregar() {
+      if (!clientes.length) msg.textContent = 'Carregando clientes...';
+      const { data, error } = await sb.from('clientes').select('*').order('criado_em', { ascending: false });
+      if (error) {
+        console.error(error);
+        msg.textContent = 'Não foi possível carregar os clientes.';
+        return;
+      }
+      clientes = data;
+      emails.replaceChildren(...clientes.map((c) => el('option', { value: c.email }, c.nome)));
+      desenhar();
+    },
+    contarPropostas(props) {
+      porEmail = new Map();
+      props.forEach((p) => porEmail.set(p.cliente_email, (porEmail.get(p.cliente_email) || 0) + 1));
+      if (clientes.length) desenhar();
+    },
+  };
+}
+
 function iniciarAdmin(sb) {
+  const clientes = listaClientes(sb);
+  navegacao((secao) => secao === 'clientes' && clientes.carregar());
+
   const form = document.getElementById('crm-form');
   const formMsg = document.getElementById('crm-form-msg');
   const lista = document.getElementById('crm-admin-list');
@@ -171,6 +248,7 @@ function iniciarAdmin(sb) {
 
   vazio.textContent = 'Carregando propostas...';
   acompanharPropostas(sb, (props) => {
+    clientes.contarPropostas(props);
     lista.replaceChildren(...props.map((p) => cartaoProposta(p, controles(p))));
     vazio.textContent = props.length ? '' : 'Nenhuma proposta cadastrada ainda.';
   }, (err) => {

@@ -9,6 +9,13 @@ Padrão MAJOR.MINOR.PATCH:
 
 Ao publicar na `main`, o site ganha a tag `vX.Y.Z` no GitHub.
 
+## 1.1.0 (2026-10-14)
+
+- Painel JMC com menu lateral: **Clientes** e **Propostas** (no celular, o menu fica no topo).
+- Clientes: lista dos clientes cadastrados com documento, contato, cidade, número de propostas e data do cadastro, com busca.
+- Propostas: o e-mail do cliente é sugerido a partir dos clientes cadastrados.
+- Administradores entram direto no Painel JMC, sem a tela de cadastro de cliente.
+
 ## 1.0.1 (2026-10-14)
 
 - Área do cliente: o login Google voltava para a tela de login sem entrar; corrigido no Supabase da VPS.

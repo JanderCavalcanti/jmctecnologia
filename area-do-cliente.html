@@ -142,34 +142,68 @@
             <div class="crm-list" id="crm-list"></div>
           </div>
 
-          <!-- Só para administradores da JMC -->
-          <div class="crm crm-admin" id="crm-admin" hidden>
-            <h3>Painel JMC: propostas dos clientes</h3>
-            <form class="crm-form" id="crm-form" novalidate>
-              <div class="field">
-                <label for="crm-email">E-mail do cliente (o mesmo do login)</label>
-                <input id="crm-email" name="clienteEmail" type="email" required autocomplete="off">
-              </div>
-              <div class="field">
-                <label for="crm-empresa">Empresa</label>
-                <input id="crm-empresa" name="empresa" type="text" autocomplete="off">
-              </div>
-              <div class="field">
-                <label for="crm-titulo">Título da proposta</label>
-                <input id="crm-titulo" name="titulo" type="text" required autocomplete="off">
-              </div>
-              <div class="field">
-                <label for="crm-obs">Observação para o cliente (opcional)</label>
-                <input id="crm-obs" name="observacao" type="text" autocomplete="off">
-              </div>
-              <button type="submit" class="btn btn-sm">Cadastrar proposta</button>
-              <p class="crm-msg" id="crm-form-msg" role="status" aria-live="polite"></p>
-            </form>
-            <p class="crm-msg" id="crm-admin-msg" role="status" aria-live="polite"></p>
-            <div class="crm-list" id="crm-admin-list"></div>
+          <!-- Só para administradores da JMC: menu lateral com os itens do CRM -->
+          <div class="crm-admin" id="crm-admin" hidden>
+            <nav class="crm-nav" aria-label="Painel JMC">
+              <p class="crm-nav-titulo">Painel JMC</p>
+              <a href="#clientes" data-secao="clientes">Clientes</a>
+              <a href="#propostas" data-secao="propostas">Propostas</a>
+            </nav>
+
+            <div class="crm-conteudo">
+              <section class="crm" id="secao-clientes" aria-labelledby="titulo-clientes">
+                <div class="crm-cabeca">
+                  <h3 id="titulo-clientes">Clientes</h3>
+                  <input type="search" id="clientes-busca" placeholder="Buscar cliente" aria-label="Buscar clientes">
+                </div>
+                <p class="crm-msg" id="clientes-msg" role="status" aria-live="polite"></p>
+                <div class="tabela-rolagem">
+                  <table class="tabela" id="clientes-tabela" hidden>
+                    <thead>
+                      <tr>
+                        <th scope="col">Cliente</th>
+                        <th scope="col">CPF/CNPJ</th>
+                        <th scope="col">Contato</th>
+                        <th scope="col">Cidade</th>
+                        <th scope="col">Propostas</th>
+                        <th scope="col">Cadastro</th>
+                      </tr>
+                    </thead>
+                    <tbody id="clientes-lista"></tbody>
+                  </table>
+                </div>
+              </section>
+
+              <section class="crm" id="secao-propostas" aria-labelledby="titulo-propostas" hidden>
+                <h3 id="titulo-propostas">Propostas</h3>
+                <form class="crm-form" id="crm-form" novalidate>
+                  <div class="field">
+                    <label for="crm-email">E-mail do cliente (o mesmo do login)</label>
+                    <input id="crm-email" name="clienteEmail" type="email" list="clientes-emails" required autocomplete="off">
+                    <datalist id="clientes-emails"></datalist>
+                  </div>
+                  <div class="field">
+                    <label for="crm-empresa">Empresa</label>
+                    <input id="crm-empresa" name="empresa" type="text" autocomplete="off">
+                  </div>
+                  <div class="field">
+                    <label for="crm-titulo">Título da proposta</label>
+                    <input id="crm-titulo" name="titulo" type="text" required autocomplete="off">
+                  </div>
+                  <div class="field">
+                    <label for="crm-obs">Observação para o cliente (opcional)</label>
+                    <input id="crm-obs" name="observacao" type="text" autocomplete="off">
+                  </div>
+                  <button type="submit" class="btn btn-sm">Cadastrar proposta</button>
+                  <p class="crm-msg" id="crm-form-msg" role="status" aria-live="polite"></p>
+                </form>
+                <p class="crm-msg" id="crm-admin-msg" role="status" aria-live="polite"></p>
+                <div class="crm-list" id="crm-admin-list"></div>
+              </section>
+            </div>
           </div>
 
-          <div class="cards">
+          <div class="cards" id="cards-cliente">
             <article class="card card-muted">
               <h3>Chamados e documentos</h3>
               <p>Em breve: abertura de chamados, histórico de atendimentos e documentos.</p>

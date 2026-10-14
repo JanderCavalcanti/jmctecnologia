@@ -1,0 +1,59 @@
+# Publica o site no GitHub Pages pela branch gh-pages:
+# - main  -> raiz do site (domínio principal)
+# - teste -> pasta /teste/ (ambiente de teste, fora dos buscadores)
+name: Publicar site
+
+on:
+  push:
+    branches: [main, teste]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publicar-site
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar a main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main
+
+      - name: Baixar a teste
+        run: |
+          if git ls-remote --exit-code --heads "https://github.com/${GITHUB_REPOSITORY}.git" teste >/dev/null; then
+            git clone --depth 1 --branch teste "https://github.com/${GITHUB_REPOSITORY}.git" teste
+          fi
+
+      - name: Montar o site
+        run: |
+          cp -r main site
+          rm -rf site/.git site/.github site/docs
+
+          if [ -d teste ]; then
+            cp -r teste site/teste
+            rm -rf site/teste/.git site/teste/.github site/teste/docs site/teste/CNAME
+            # Ambiente de teste: fora dos buscadores e com aviso no topo
+            for f in site/teste/*.html; do
+              sed -i 's#<head>#<head>\n  <meta name="robots" content="noindex, nofollow">#' "$f"
+              sed -i 's#<body>#<body>\n  <div style="background:\#404040;color:\#fff;text-align:center;padding:8px 16px;font:600 14px/1.4 Inter,system-ui,sans-serif">Ambiente de teste. Esta versão ainda não está no site oficial.</div>#' "$f"
+            done
+          fi
+
+          touch site/.nojekyll
+
+      - name: Enviar para a branch gh-pages
+        run: |
+          cd site
+          git init -q -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Publica o site (${GITHUB_REF_NAME} ${GITHUB_SHA::7})"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" gh-pages

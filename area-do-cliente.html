@@ -64,6 +64,63 @@
           <p class="login-msg" id="login-msg" role="status" aria-live="polite"></p>
         </div>
 
+        <!-- Primeiro acesso: cadastro do cliente -->
+        <div class="cadastro-box" id="cadastro-box" hidden>
+          <h2>Complete o seu cadastro</h2>
+          <p>Precisamos destes dados para preparar propostas e contratos. Você só preenche uma vez e pode editar depois.</p>
+          <form class="cadastro-form" id="cadastro-form" novalidate>
+            <div class="field">
+              <label for="cad-documento">CPF ou CNPJ</label>
+              <input id="cad-documento" name="documento" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" required>
+            </div>
+            <div class="field">
+              <label for="cad-nome" id="cadastro-nome-label">Nome completo ou razão social</label>
+              <input id="cad-nome" name="nome" autocomplete="organization" required>
+            </div>
+            <div class="field">
+              <label for="cad-contato">Nome para contato</label>
+              <input id="cad-contato" name="contato" autocomplete="name" required>
+            </div>
+            <div class="field">
+              <label for="cad-telefone">Telefone para contato</label>
+              <input id="cad-telefone" name="telefone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="(00) 00000-0000" required>
+            </div>
+            <div class="field">
+              <label for="cad-cep">CEP</label>
+              <input id="cad-cep" name="cep" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" required>
+            </div>
+            <div class="field">
+              <label for="cad-logradouro">Logradouro</label>
+              <input id="cad-logradouro" name="logradouro" data-nome="o logradouro" autocomplete="address-line1" required>
+            </div>
+            <div class="field">
+              <label for="cad-numero">Número</label>
+              <input id="cad-numero" name="numero" data-nome="o número" autocomplete="off" required>
+            </div>
+            <div class="field">
+              <label for="cad-complemento">Complemento (opcional)</label>
+              <input id="cad-complemento" name="complemento" autocomplete="address-line2">
+            </div>
+            <div class="field">
+              <label for="cad-bairro">Bairro</label>
+              <input id="cad-bairro" name="bairro" data-nome="o bairro" autocomplete="address-level3" required>
+            </div>
+            <div class="field">
+              <label for="cad-cidade">Cidade</label>
+              <input id="cad-cidade" name="cidade" data-nome="a cidade" autocomplete="address-level2" required>
+            </div>
+            <div class="field">
+              <label for="cad-uf">Estado (UF)</label>
+              <input id="cad-uf" name="uf" maxlength="2" autocomplete="address-level1" placeholder="AM" required>
+            </div>
+            <p class="form-msg" id="cadastro-msg" role="status" aria-live="polite"></p>
+            <div class="cadastro-botoes">
+              <button type="submit" class="btn">Salvar e continuar</button>
+              <button type="button" class="btn btn-ghost" id="cadastro-cancelar" hidden>Cancelar</button>
+            </div>
+          </form>
+        </div>
+
         <!-- Cliente logado: painel -->
         <div class="client-panel" id="client-panel" hidden>
           <div class="client-head">
@@ -72,8 +129,45 @@
               <h2>Olá, <span id="client-name">cliente</span>!</h2>
               <p id="client-email"></p>
             </div>
-            <button type="button" class="btn btn-sm btn-ghost" id="logout">Sair</button>
+            <div class="client-actions">
+              <button type="button" class="btn btn-sm btn-ghost" id="meus-dados" hidden>Meus dados</button>
+              <button type="button" class="btn btn-sm btn-ghost" id="logout">Sair</button>
+            </div>
           </div>
+          <!-- Mini CRM: status das propostas do cliente -->
+          <div class="crm" id="crm">
+            <h3>Suas propostas</h3>
+            <p class="crm-msg" id="crm-msg" role="status" aria-live="polite"></p>
+            <div class="crm-list" id="crm-list"></div>
+          </div>
+
+          <!-- Só para administradores da JMC -->
+          <div class="crm crm-admin" id="crm-admin" hidden>
+            <h3>Painel JMC: propostas dos clientes</h3>
+            <form class="crm-form" id="crm-form" novalidate>
+              <div class="field">
+                <label for="crm-email">E-mail do cliente (o mesmo do login)</label>
+                <input id="crm-email" name="clienteEmail" type="email" required autocomplete="off">
+              </div>
+              <div class="field">
+                <label for="crm-empresa">Empresa</label>
+                <input id="crm-empresa" name="empresa" type="text" autocomplete="off">
+              </div>
+              <div class="field">
+                <label for="crm-titulo">Título da proposta</label>
+                <input id="crm-titulo" name="titulo" type="text" required autocomplete="off">
+              </div>
+              <div class="field">
+                <label for="crm-obs">Observação para o cliente (opcional)</label>
+                <input id="crm-obs" name="observacao" type="text" autocomplete="off">
+              </div>
+              <button type="submit" class="btn btn-sm">Cadastrar proposta</button>
+              <p class="crm-msg" id="crm-form-msg" role="status" aria-live="polite"></p>
+            </form>
+            <p class="crm-msg" id="crm-admin-msg" role="status" aria-live="polite"></p>
+            <div class="crm-list" id="crm-admin-list"></div>
+          </div>
+
           <div class="cards">
             <article class="card card-muted">
               <h3>Chamados e documentos</h3>

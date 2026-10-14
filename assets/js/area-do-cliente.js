@@ -1,5 +1,6 @@
 // Login de clientes com Google ou Microsoft via Firebase Authentication.
 import { firebaseConfig, loginProviders } from './firebase-config.js';
+import { iniciarCRM, pararCRM } from './crm.js';
 
 const SDK = 'https://www.gstatic.com/firebasejs/10.12.2';
 
@@ -26,8 +27,10 @@ function showMessage(text) {
 }
 
 function showUser(user) {
+  // O painel só aparece depois que o mini CRM confere o cadastro do cliente (crm.js).
   loginBox.hidden = !!user;
-  panel.hidden = !user;
+  panel.hidden = true;
+  document.getElementById('cadastro-box').hidden = true;
   if (!user) return;
   document.getElementById('client-name').textContent = (user.displayName || user.email || 'cliente').split(' ')[0];
   document.getElementById('client-email').textContent = user.email || '';
@@ -49,7 +52,8 @@ async function start() {
     GoogleAuthProvider, OAuthProvider, browserLocalPersistence, setPersistence,
   } = await import(`${SDK}/firebase-auth.js`);
 
-  const auth = getAuth(initializeApp(firebaseConfig));
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
   auth.languageCode = 'pt';
   await setPersistence(auth, browserLocalPersistence);
 
@@ -78,7 +82,15 @@ async function start() {
   );
 
   document.getElementById('logout').addEventListener('click', () => signOut(auth));
-  onAuthStateChanged(auth, showUser);
+  onAuthStateChanged(auth, (user) => {
+    showUser(user);
+    if (!user) return pararCRM();
+    iniciarCRM(app, user).catch((err) => {
+      console.error(err);
+      panel.hidden = false;
+      document.getElementById('crm-msg').textContent = 'Não foi possível carregar suas propostas agora.';
+    });
+  });
 }
 
 start().catch((err) => {

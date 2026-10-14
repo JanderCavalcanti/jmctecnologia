@@ -1,5 +1,6 @@
 // Login de clientes com Google ou Microsoft via Firebase Authentication.
 import { firebaseConfig, loginProviders } from './firebase-config.js';
+import { iniciarCRM, pararCRM } from './crm.js';
 
 const SDK = 'https://www.gstatic.com/firebasejs/10.12.2';
 
@@ -49,7 +50,8 @@ async function start() {
     GoogleAuthProvider, OAuthProvider, browserLocalPersistence, setPersistence,
   } = await import(`${SDK}/firebase-auth.js`);
 
-  const auth = getAuth(initializeApp(firebaseConfig));
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
   auth.languageCode = 'pt';
   await setPersistence(auth, browserLocalPersistence);
 
@@ -78,7 +80,14 @@ async function start() {
   );
 
   document.getElementById('logout').addEventListener('click', () => signOut(auth));
-  onAuthStateChanged(auth, showUser);
+  onAuthStateChanged(auth, (user) => {
+    showUser(user);
+    if (!user) return pararCRM();
+    iniciarCRM(app, user).catch((err) => {
+      console.error(err);
+      document.getElementById('crm-msg').textContent = 'Não foi possível carregar suas propostas agora.';
+    });
+  });
 }
 
 start().catch((err) => {

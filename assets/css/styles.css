@@ -320,3 +320,23 @@ p { margin: 0 0 1em; }
   .proposta { padding: 20px 16px; }
   .etapa-nome { font-size: .85rem; }
 }
+
+/* Cadastro do cliente no primeiro acesso */
+.client-actions { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+.client-head .client-actions .btn { margin-left: 0; font: inherit; font-weight: 600; cursor: pointer; }
+.cadastro-box {
+  max-width: 760px; margin: 0 auto;
+  background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 32px 28px; box-shadow: var(--shadow);
+}
+.cadastro-box > p { color: var(--muted); }
+.cadastro-form { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 16px; margin-top: 20px; }
+.cadastro-form .field-largo, .cadastro-form .form-msg, .cadastro-botoes { grid-column: 1 / -1; }
+.cadastro-form .form-msg { margin: 0 0 12px; color: var(--muted); min-height: 1.5em; }
+.cadastro-botoes { display: flex; gap: 12px; flex-wrap: wrap; }
+.cadastro-botoes .btn { font: inherit; font-weight: 600; cursor: pointer; }
+.cadastro-botoes .btn:disabled { opacity: .6; cursor: wait; transform: none; }
+@media (max-width: 600px) {
+  .cadastro-box { padding: 24px 18px; }
+  .cadastro-form { grid-template-columns: 1fr; }
+}

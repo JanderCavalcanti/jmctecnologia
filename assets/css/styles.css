@@ -262,3 +262,9 @@ p { margin: 0 0 1em; }
 @media (max-width: 520px) {
   .contact-form { padding: 22px 18px; }
 }
+
+/* Serviços em 2 colunas */
+.cards-2 { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 720px) {
+  .cards-2 { grid-template-columns: 1fr; }
+}

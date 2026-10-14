@@ -1,8 +1,8 @@
-// Login de clientes com Google ou Microsoft via Firebase Authentication.
-import { firebaseConfig, loginProviders } from './firebase-config.js';
+// Login de clientes com Google (ou Microsoft) via Supabase Auth.
+import { supabaseConfig, loginProviders } from './supabase-config.js';
 import { iniciarCRM, pararCRM } from './crm.js';
 
-const SDK = 'https://www.gstatic.com/firebasejs/10.12.2';
+const SDK = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm';
 
 const loginBox = document.getElementById('login-box');
 const panel = document.getElementById('client-panel');
@@ -13,14 +13,8 @@ const buttons = [...loginBox.querySelectorAll('[data-provider]')].filter((b) => 
   return active;
 });
 
-const ERROS = {
-  'auth/popup-closed-by-user': 'A janela de login foi fechada antes de concluir.',
-  'auth/cancelled-popup-request': 'A janela de login foi fechada antes de concluir.',
-  'auth/popup-blocked': 'O navegador bloqueou a janela de login. Permita pop-ups para este site e tente de novo.',
-  'auth/account-exists-with-different-credential': 'Este e-mail já está ligado a outro tipo de login. Use o botão que você usou da primeira vez.',
-  'auth/unauthorized-domain': 'Este endereço ainda não está autorizado no Firebase.',
-  'auth/operation-not-allowed': 'Este tipo de login ainda não foi ativado no Firebase.',
-};
+// Nome do provedor no Supabase para cada botão.
+const PROVEDORES = { google: 'google', microsoft: 'azure' };
 
 function showMessage(text) {
   msg.textContent = text;
@@ -32,63 +26,72 @@ function showUser(user) {
   panel.hidden = true;
   document.getElementById('cadastro-box').hidden = true;
   if (!user) return;
-  document.getElementById('client-name').textContent = (user.displayName || user.email || 'cliente').split(' ')[0];
+  const meta = user.user_metadata || {};
+  const nome = meta.full_name || meta.name || user.email || 'cliente';
+  document.getElementById('client-name').textContent = nome.split(' ')[0];
   document.getElementById('client-email').textContent = user.email || '';
   const photo = document.getElementById('client-photo');
-  photo.hidden = !user.photoURL;
-  if (user.photoURL) photo.src = user.photoURL;
+  const foto = meta.avatar_url || meta.picture;
+  photo.hidden = !foto;
+  if (foto) photo.src = foto;
+}
+
+// Volta do Google com erro (ex.: provedor não ativado no Supabase).
+function erroNaUrl() {
+  const params = new URLSearchParams(location.hash.slice(1) || location.search.slice(1));
+  const erro = params.get('error_description') || params.get('error');
+  if (!erro) return;
+  history.replaceState(null, '', location.pathname);
+  showMessage('Não foi possível entrar agora. Tente novamente em instantes.');
+  console.error('Login:', erro);
 }
 
 async function start() {
-  if (!firebaseConfig.apiKey) {
+  if (!supabaseConfig.url || !supabaseConfig.anonKey) {
     buttons.forEach((b) => (b.disabled = true));
     showMessage('O login ainda está sendo configurado. Enquanto isso, use os canais de suporte abaixo.');
     return;
   }
 
-  const { initializeApp } = await import(`${SDK}/firebase-app.js`);
-  const {
-    getAuth, onAuthStateChanged, signInWithPopup, signOut,
-    GoogleAuthProvider, OAuthProvider, browserLocalPersistence, setPersistence,
-  } = await import(`${SDK}/firebase-auth.js`);
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  auth.languageCode = 'pt';
-  await setPersistence(auth, browserLocalPersistence);
-
-  const providers = {
-    google: () => new GoogleAuthProvider(),
-    microsoft: () => {
-      const p = new OAuthProvider('microsoft.com');
-      p.setCustomParameters({ prompt: 'select_account' });
-      return p;
-    },
-  };
+  const { createClient } = await import(SDK);
+  const sb = createClient(supabaseConfig.url, supabaseConfig.anonKey, {
+    auth: { persistSession: true, detectSessionInUrl: true, flowType: 'pkce' },
+  });
+  erroNaUrl();
 
   buttons.forEach((button) =>
     button.addEventListener('click', async () => {
       showMessage('');
       buttons.forEach((b) => (b.disabled = true));
-      try {
-        await signInWithPopup(auth, providers[button.dataset.provider]());
-      } catch (err) {
-        showMessage(ERROS[err.code] || 'Não foi possível entrar agora. Tente novamente em instantes.');
-        console.error(err);
-      } finally {
+      const { error } = await sb.auth.signInWithOAuth({
+        provider: PROVEDORES[button.dataset.provider],
+        options: { redirectTo: location.origin + location.pathname },
+      });
+      if (error) {
+        console.error(error);
+        showMessage('Não foi possível entrar agora. Tente novamente em instantes.');
         buttons.forEach((b) => (b.disabled = false));
       }
     })
   );
 
-  document.getElementById('logout').addEventListener('click', () => signOut(auth));
-  onAuthStateChanged(auth, (user) => {
-    showUser(user);
-    if (!user) return pararCRM();
-    iniciarCRM(app, user).catch((err) => {
-      console.error(err);
-      panel.hidden = false;
-      document.getElementById('crm-msg').textContent = 'Não foi possível carregar suas propostas agora.';
+  document.getElementById('logout').addEventListener('click', () => sb.auth.signOut());
+
+  // Evita reabrir o painel a cada renovação do token: só reage quando muda a pessoa logada.
+  let atual = null;
+  sb.auth.onAuthStateChange((_evento, session) => {
+    const user = session?.user || null;
+    if ((user?.id || null) === atual) return;
+    atual = user?.id || null;
+    // Fora do callback: o Supabase pede para não chamar o banco dentro dele.
+    setTimeout(() => {
+      showUser(user);
+      if (!user) return pararCRM();
+      iniciarCRM(sb, user).catch((err) => {
+        console.error(err);
+        panel.hidden = false;
+        document.getElementById('crm-msg').textContent = 'Não foi possível carregar suas propostas agora.';
+      });
     });
   });
 }

@@ -1,5 +1,5 @@
 // Cadastro do cliente no primeiro acesso: CPF/CNPJ, nome ou razão social, endereço pelo CEP e telefone.
-// Os dados ficam em clientes/{uid} no Firestore (regras em docs/firestore.rules).
+// Os dados ficam na tabela clientes do Supabase (regras em supabase/schema.sql).
 
 const digitos = (v) => String(v || '').replace(/\D/g, '');
 
@@ -48,7 +48,7 @@ export function cnpjValido(v) {
 }
 
 // Mostra o formulário e resolve quando o cliente salvar. "dados" preenche o formulário ao editar.
-export function pedirCadastro(fs, db, user, dados) {
+export function pedirCadastro(sb, user, dados) {
   const box = document.getElementById('cadastro-box');
   const form = document.getElementById('cadastro-form');
   const msg = document.getElementById('cadastro-msg');
@@ -67,7 +67,7 @@ export function pedirCadastro(fs, db, user, dados) {
     ['nome', 'contato', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'uf'].forEach((k) => (campo(k).value = dados[k] || ''));
   } else {
     // Prévia vinda da conta Google; o cliente pode trocar.
-    campo('contato').value = user.displayName || '';
+    campo('contato').value = user.user_metadata?.full_name || user.user_metadata?.name || '';
   }
   cancelar.hidden = !dados;
 
@@ -168,23 +168,20 @@ export function pedirCadastro(fs, db, user, dados) {
         uf: campo('uf').value,
         telefone: digitos(campo('telefone').value),
         email: (user.email || '').toLowerCase(),
-        atualizadoEm: fs.serverTimestamp(),
-        ...(dados ? {} : { criadoEm: fs.serverTimestamp() }),
       };
       const botao = form.querySelector('button[type="submit"]');
       botao.disabled = true;
       msg.className = 'form-msg';
       msg.textContent = 'Salvando...';
-      try {
-        await fs.setDoc(fs.doc(db, 'clientes', user.uid), novo, { merge: true });
-        fechar(novo);
-      } catch (err) {
-        console.error(err);
+      const { error } = await sb.from('clientes').upsert({ id: user.id, ...novo });
+      botao.disabled = false;
+      if (error) {
+        console.error(error);
         msg.className = 'form-msg erro';
         msg.textContent = 'Não foi possível salvar agora. Tente novamente em instantes.';
-      } finally {
-        botao.disabled = false;
+        return;
       }
+      fechar(novo);
     };
 
     form.addEventListener('input', aoDigitar);

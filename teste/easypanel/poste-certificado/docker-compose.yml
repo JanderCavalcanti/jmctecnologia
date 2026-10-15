@@ -1,0 +1,95 @@
+# Copia para o poste.io (servidor de e-mail) o certificado válido que o Easypanel (Traefik)
+# já emite para mail.jmctecnologia.com.br. O poste.io não consegue emitir o próprio pelo
+# Let's Encrypt porque o Traefik responde a validação no lugar dele.
+#
+# Roda no Easypanel, projeto "e-mail", serviço compose "certificado".
+# A cada 6 horas compara o certificado do Traefik com o do poste.io; se mudou (renovação),
+# grava em /data/ssl do poste.io (volume e-mail_poste_data) (guardando o anterior em ssl/anterior) e reinicia o
+# serviço do poste.io para carregar. No poste.io, o Let's Encrypt próprio fica desligado.
+
+services:
+  certificado:
+    image: docker:27-cli
+    restart: unless-stopped
+    environment:
+      DOMINIO: mail.jmctecnologia.com.br
+      SERVICO_POSTE: e-mail_poste
+      INTERVALO: "21600"
+    volumes:
+      - /etc/easypanel/traefik:/traefik:ro
+      - poste_data:/poste
+      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apk add --no-cache jq openssl >/dev/null || exit 1
+        log() { echo "$$(date -u +%FT%TZ) $$*"; }
+        # Reinicia o contêiner do poste.io: só na partida ele copia os arquivos de ssl para o servidor de e-mail
+        reiniciar() {
+          cont=$$(docker ps -q --filter "name=$$SERVICO_POSTE.")
+          if [ -n "$$cont" ] && docker restart $$cont >/dev/null; then log "poste.io reiniciado"; else log "não consegui reiniciar $$SERVICO_POSTE"; fi
+        }
+        copiar() {
+          acme=/traefik/acme.json
+          [ -r "$$acme" ] || { log "não achei $$acme"; return; }
+          [ -d /poste/ssl ] || { log "não achei a pasta ssl do poste.io em /poste/ssl"; return; }
+          sel='[.[]?.Certificates[]? | select(.domain.main==$$d)][0]'
+          cert=$$(jq -r --arg d "$$DOMINIO" "$$sel.certificate // empty" "$$acme")
+          chave=$$(jq -r --arg d "$$DOMINIO" "$$sel.key // empty" "$$acme")
+          [ -n "$$cert" ] && [ -n "$$chave" ] || { log "o Traefik não tem certificado para $$DOMINIO"; return; }
+          echo "$$cert" | base64 -d > /tmp/cadeia.pem
+          echo "$$chave" | base64 -d > /tmp/chave.pem
+          openssl x509 -in /tmp/cadeia.pem -noout -checkend 0 >/dev/null || { log "certificado do Traefik vencido"; return; }
+          # Formato que o poste.io pede (ssl/README.md): server.crt só com o certificado do domínio,
+          # ca.crt com os intermediários e server.key no formato "BEGIN RSA PRIVATE KEY".
+          openssl x509 -in /tmp/cadeia.pem -out /tmp/server.pem
+          awk 'n>0{print} /END CERTIFICATE/{n++}' /tmp/cadeia.pem > /tmp/ca.pem
+          openssl rsa -in /tmp/chave.pem -traditional -out /tmp/chave-rsa.pem 2>/dev/null || { log "a chave do Traefik não é RSA"; return; }
+          # Os arquivos precisam ser do mesmo dono da pasta (usuário mail do poste.io), senão ele não lê a chave
+          dono=$$(stat -c %u:%g /poste/ssl)
+          mudou=0
+          if ! cmp -s /tmp/server.pem /poste/ssl/server.crt || ! cmp -s /tmp/chave-rsa.pem /poste/ssl/server.key || ! cmp -s /tmp/ca.pem /poste/ssl/ca.crt; then
+            mkdir -p /poste/ssl/anterior && cp -a /poste/ssl/server.crt /poste/ssl/server.key /poste/ssl/ca.crt /poste/ssl/anterior/ 2>/dev/null
+            install -m 644 /tmp/server.pem /poste/ssl/server.crt
+            install -m 600 /tmp/chave-rsa.pem /poste/ssl/server.key
+            install -m 644 /tmp/ca.pem /poste/ssl/ca.crt
+            log "certificado novo gravado: $$(openssl x509 -in /tmp/server.pem -noout -subject -enddate | tr '\n' ' ')"
+            mudou=1
+          fi
+          for f in server.crt server.key ca.crt; do
+            if [ "$$(stat -c %u:%g /poste/ssl/$$f)" != "$$dono" ]; then chown "$$dono" /poste/ssl/$$f; mudou=1; fi
+          done
+          if [ "$$mudou" = 0 ]; then
+            log "certificado em dia: $$(openssl x509 -in /tmp/server.pem -noout -enddate)"
+            return
+          fi
+          reiniciar
+        }
+        # Diagnóstico na partida: arquivos de certificado do poste.io e o que a porta 587 entrega
+        log "arquivos em /poste/ssl:"; ls -la /poste/ssl 2>&1 | head -20; cat /poste/ssl/README.md 2>/dev/null
+        for f in $$(find /poste/ssl -name '*.crt' -o -name '*.pem' 2>/dev/null | head -20); do
+          echo "  $$f: $$(openssl x509 -in $$f -noout -subject -enddate 2>/dev/null | tr '\n' ' ')"
+        done
+        # Confere o certificado que a porta 587 entrega; se não for o do domínio, reinicia o poste.io
+        porta587() {
+          visto=$$(echo QUIT | timeout 15 openssl s_client -starttls smtp -connect $$DOMINIO:587 -servername $$DOMINIO 2>/dev/null | openssl x509 -noout -subject -ext subjectAltName 2>/dev/null | tr '\n' ' ')
+          log "porta 587 entrega: $$visto"
+          case "$$visto" in *"DNS:$$DOMINIO"*) return 0 ;; esac
+          return 1
+        }
+        while true; do
+          copiar
+          sleep 120
+          porta587 || { reiniciar; sleep 180; porta587; }
+          sleep "$$INTERVALO"
+        done
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+
+# Volume de dados do poste.io (criado pelo Easypanel para o serviço e-mail/poste)
+volumes:
+  poste_data:
+    external: true
+    name: e-mail_poste_data

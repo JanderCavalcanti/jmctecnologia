@@ -47,14 +47,48 @@ export function cnpjValido(v) {
   return dv(12) === Number(d[12]) && dv(13) === Number(d[13]);
 }
 
-// Mostra o formulário e resolve quando o cliente salvar. "dados" preenche o formulário ao editar.
-export function pedirCadastro(sb, user, dados) {
+// Senha da conta com e-mail: mínimo de 8 caracteres, com letras e números (o Supabase confere de novo).
+export const senhaValida = (s) => s.length >= 8 && /[a-z]/i.test(s) && /\d/.test(s);
+export function forcaSenha(s) {
+  if (!s) return 0;
+  let n = 0;
+  if (s.length >= 8) n++;
+  if (/[a-z]/i.test(s) && /\d/.test(s)) n++;
+  if (s.length >= 12) n++;
+  if (/[^a-z0-9]/i.test(s) || (/[a-z]/.test(s) && /[A-Z]/.test(s))) n++;
+  return n;
+}
+
+// Quem criou a conta com e-mail já mandou o cadastro junto (user_metadata.cadastro):
+// no primeiro acesso depois da confirmação, ele vai direto para a tabela clientes.
+export async function salvarCadastroPendente(sb, user) {
+  const pendente = user.user_metadata?.cadastro;
+  if (!pendente) return null;
+  const novo = { ...pendente, email: (user.email || '').toLowerCase() };
+  const { error } = await sb.from('clientes').upsert({ id: user.id, ...novo });
+  if (error) {
+    console.error(error);
+    return null;
+  }
+  return novo;
+}
+
+// Mostra o formulário e resolve quando o cliente salvar. "dados" preenche o formulário.
+// opcoes.novaConta = { email }: criação de conta com e-mail e senha (sem login ainda).
+// opcoes.primeiroAcesso: sem botão Cancelar, mesmo com dados pré-preenchidos.
+export function pedirCadastro(sb, user, dados, opcoes = {}) {
+  const { novaConta = null, primeiroAcesso = false } = opcoes;
   const box = document.getElementById('cadastro-box');
   const form = document.getElementById('cadastro-form');
   const msg = document.getElementById('cadastro-msg');
   const cancelar = document.getElementById('cadastro-cancelar');
   const campo = (nome) => form.elements[nome];
   const labelNome = document.getElementById('cadastro-nome-label');
+  const acesso = document.getElementById('cadastro-acesso');
+  const intro = document.getElementById('cadastro-intro');
+  const enviar = document.getElementById('cadastro-enviar');
+  const forca = [...document.querySelectorAll('#cad-forca i')];
+  const confere = document.getElementById('cad-confere');
 
   form.reset();
   msg.textContent = '';
@@ -65,11 +99,28 @@ export function pedirCadastro(sb, user, dados) {
     campo('telefone').value = mascaraTelefone(dados.telefone);
     campo('cep').value = mascaraCep(dados.cep);
     ['nome', 'contato', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'uf'].forEach((k) => (campo(k).value = dados[k] || ''));
-  } else {
+  } else if (user) {
     // Prévia vinda da conta Google; o cliente pode trocar.
     campo('contato').value = user.user_metadata?.full_name || user.user_metadata?.name || '';
   }
-  cancelar.hidden = !dados;
+  cancelar.hidden = !novaConta && (!dados || primeiroAcesso);
+  acesso.hidden = !novaConta;
+  acesso.disabled = !novaConta;
+  if (novaConta) campo('email').value = novaConta.email || '';
+  intro.textContent = novaConta
+    ? 'Precisamos destes dados para preparar propostas e contratos. Crie também a senha que você vai usar para entrar.'
+    : 'Precisamos destes dados para preparar propostas e contratos. Você só preenche uma vez e pode editar depois.';
+  enviar.textContent = novaConta ? 'Criar conta' : 'Salvar e continuar';
+  const mostrarSenha = () => {
+    if (!novaConta) return;
+    const s1 = campo('senha').value;
+    const s2 = campo('senha2').value;
+    const n = forcaSenha(s1);
+    forca.forEach((i, k) => i.classList.toggle('on', k < n));
+    confere.className = s2 ? (s1 === s2 ? 'dica ok' : 'dica erro') : 'dica';
+    confere.textContent = s2 ? (s1 === s2 ? '✓ As senhas conferem' : 'As senhas não conferem') : '';
+  };
+  mostrarSenha();
 
   const atualizarNome = () => {
     const n = digitos(campo('documento').value).length;
@@ -112,6 +163,7 @@ export function pedirCadastro(sb, user, dados) {
     ev.target.removeAttribute('aria-invalid');
     if (ev.target.name === 'documento') atualizarNome();
     if (ev.target.name === 'cep') buscarCep();
+    if (ev.target.name === 'senha' || ev.target.name === 'senha2') mostrarSenha();
   };
 
   return new Promise((resolve) => {
@@ -132,6 +184,11 @@ export function pedirCadastro(sb, user, dados) {
       if (!/^[A-Z]{2}$/.test(campo('uf').value)) marcar('uf', 'estado (UF) inválido');
       const tel = digitos(campo('telefone').value);
       if (tel.length < 10) marcar('telefone', 'telefone incompleto');
+      if (novaConta) {
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(campo('email').value.trim())) marcar('email', 'e-mail inválido');
+        if (!senhaValida(campo('senha').value)) marcar('senha', 'a senha precisa ter 8 caracteres, com letras e números');
+        else if (campo('senha').value !== campo('senha2').value) marcar('senha2', 'as senhas não conferem');
+      }
       return erros;
     };
 
@@ -167,14 +224,14 @@ export function pedirCadastro(sb, user, dados) {
         cidade: campo('cidade').value.trim(),
         uf: campo('uf').value,
         telefone: digitos(campo('telefone').value),
-        email: (user.email || '').toLowerCase(),
+        email: novaConta ? campo('email').value.trim().toLowerCase() : (user.email || '').toLowerCase(),
       };
-      const botao = form.querySelector('button[type="submit"]');
-      botao.disabled = true;
+      enviar.disabled = true;
       msg.className = 'form-msg';
       msg.textContent = 'Salvando...';
+      if (novaConta) return criarConta(novo);
       const { error } = await sb.from('clientes').upsert({ id: user.id, ...novo });
-      botao.disabled = false;
+      enviar.disabled = false;
       if (error) {
         console.error(error);
         msg.className = 'form-msg erro';
@@ -184,10 +241,42 @@ export function pedirCadastro(sb, user, dados) {
       fechar(novo);
     };
 
+    // Conta com e-mail: o cadastro vai junto e é gravado no primeiro acesso, depois da confirmação.
+    const criarConta = async (novo) => {
+      const { data, error } = await sb.auth.signUp({
+        email: novo.email,
+        password: campo('senha').value,
+        options: {
+          emailRedirectTo: location.origin + location.pathname,
+          data: { full_name: novo.contato, cadastro: novo },
+        },
+      });
+      enviar.disabled = false;
+      if (error) {
+        console.error(error);
+        msg.className = 'form-msg erro';
+        msg.textContent = error.code === 'weak_password'
+          ? 'A senha precisa ter pelo menos 8 caracteres, com letras e números.'
+          : error.code === 'over_email_send_rate_limit' || error.status === 429
+            ? 'Muitas tentativas seguidas. Aguarde alguns minutos e tente de novo.'
+            : error.code === 'email_address_invalid'
+              ? 'Confira o e-mail informado.'
+              : 'Não foi possível criar a conta agora. Tente novamente em instantes.';
+        return;
+      }
+      // E-mail que já tem conta: o Supabase responde sem identidades, sem revelar a conta.
+      if (data.user && !data.user.identities?.length) {
+        msg.className = 'form-msg erro';
+        msg.textContent = 'Este e-mail já tem uma conta. Volte e entre com a sua senha ou use "Esqueci minha senha".';
+        return;
+      }
+      fechar({ contaNova: true, email: novo.email });
+    };
+
     form.addEventListener('input', aoDigitar);
     form.addEventListener('submit', aoEnviar);
     cancelar.addEventListener('click', aoCancelar);
     box.hidden = false;
-    campo('documento').focus();
+    (novaConta && !campo('email').value ? campo('email') : campo('documento')).focus();
   });
 }

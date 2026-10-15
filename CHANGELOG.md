@@ -9,6 +9,17 @@ Padrão MAJOR.MINOR.PATCH:
 
 Ao publicar na `main`, o site ganha a tag `vX.Y.Z` no GitHub.
 
+## 1.2.0 (2026-10-15)
+
+- Área do cliente: entrar com e-mail e senha, além do Google.
+- Criar conta com e-mail: a senha é criada na mesma tela do cadastro, e a conta é ativada pelo link enviado por e-mail.
+- "Esqueci minha senha": link por e-mail para criar uma nova senha.
+- E-mails da Área do cliente com o visual da JMC.
+
+## 1.1.1 (2026-10-15)
+
+- Página inicial: removido o quadro escuro ao lado do título.
+
 ## 1.1.0 (2026-10-14)
 
 - Painel JMC com menu lateral: **Clientes** e **Propostas** (no celular, o menu fica no topo).

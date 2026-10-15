@@ -9,6 +9,10 @@ Padrão MAJOR.MINOR.PATCH:
 
 Ao publicar na `main`, o site ganha a tag `vX.Y.Z` no GitHub.
 
+## 1.1.1 (2026-10-15)
+
+- Página inicial: removido o quadro escuro ao lado do título.
+
 ## 1.1.0 (2026-10-14)
 
 - Painel JMC com menu lateral: **Clientes** e **Propostas** (no celular, o menu fica no topo).

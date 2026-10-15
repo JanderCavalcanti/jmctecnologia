@@ -92,17 +92,6 @@ p { margin: 0 0 1em; }
 }
 .hero-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 48px; align-items: center; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
-.hero-card {
-  background: linear-gradient(160deg, var(--primary), var(--primary-dark));
-  color: #fff; border-radius: 20px; padding: 32px;
-  box-shadow: 0 24px 60px rgba(38,38,38,.25);
-}
-.hero-card-row {
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,.15); font-weight: 500;
-}
-.hero-card-row:last-child { border-bottom: 0; }
-.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(255,153,0,.3); flex: none; }
 
 /* Serviços */
 .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 32px; }

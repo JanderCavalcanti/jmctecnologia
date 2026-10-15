@@ -4,7 +4,7 @@
 #
 # Roda no Easypanel, projeto "e-mail", serviço compose "certificado".
 # A cada 6 horas compara o certificado do Traefik com o do poste.io; se mudou (renovação),
-# grava em /data/ssl do poste.io (guardando o anterior em ssl/anterior) e reinicia o
+# grava em /data/ssl do poste.io (volume e-mail_poste_data) (guardando o anterior em ssl/anterior) e reinicia o
 # serviço do poste.io para carregar. No poste.io, o Let's Encrypt próprio fica desligado.
 
 services:
@@ -17,7 +17,7 @@ services:
       INTERVALO: "21600"
     volumes:
       - /etc/easypanel/traefik:/traefik:ro
-      - /etc/easypanel/projects/e-mail/poste/volumes/data:/poste
+      - poste_data:/poste
       - /var/run/docker.sock:/var/run/docker.sock
     entrypoint: ["/bin/sh", "-c"]
     command:
@@ -58,7 +58,9 @@ services:
             log "certificado em dia: $$(openssl x509 -in /tmp/server.pem -noout -enddate)"
             return
           fi
-          if docker service update --force --detach "$$SERVICO_POSTE" >/dev/null; then log "poste.io reiniciado"; else log "não consegui reiniciar $$SERVICO_POSTE"; fi
+          # Reinicia o contêiner do poste.io para ele copiar os arquivos novos para o servidor de e-mail
+          cont=$$(docker ps -q --filter "name=$$SERVICO_POSTE.")
+          if [ -n "$$cont" ] && docker restart $$cont >/dev/null; then log "poste.io reiniciado"; else log "não consegui reiniciar $$SERVICO_POSTE"; fi
         }
         # Diagnóstico na partida: arquivos de certificado do poste.io e o que a porta 587 entrega
         log "arquivos em /poste/ssl:"; ls -la /poste/ssl 2>&1 | head -20; cat /poste/ssl/README.md 2>/dev/null
@@ -72,3 +74,9 @@ services:
       resources:
         limits:
           memory: 64M
+
+# Volume de dados do poste.io (criado pelo Easypanel para o serviço e-mail/poste)
+volumes:
+  poste_data:
+    external: true
+    name: e-mail_poste_data

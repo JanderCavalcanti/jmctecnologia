@@ -1,0 +1,55 @@
+# Copia para o poste.io (servidor de e-mail) o certificado válido que o Easypanel (Traefik)
+# já emite para mail.jmctecnologia.com.br. O poste.io não consegue emitir o próprio pelo
+# Let's Encrypt porque o Traefik responde a validação no lugar dele.
+#
+# Roda no Easypanel, projeto "e-mail", serviço compose "certificado".
+# A cada 6 horas compara o certificado do Traefik com o do poste.io; se mudou (renovação),
+# grava em /data/ssl do poste.io (guardando o anterior em ssl/anterior) e reinicia o
+# serviço do poste.io para carregar. No poste.io, o Let's Encrypt próprio fica desligado.
+
+services:
+  certificado:
+    image: docker:27-cli
+    restart: unless-stopped
+    environment:
+      DOMINIO: mail.jmctecnologia.com.br
+      SERVICO_POSTE: e-mail_poste
+      INTERVALO: "21600"
+    volumes:
+      - /etc/easypanel/traefik:/traefik:ro
+      - /etc/easypanel/projects/e-mail/poste/volumes/data:/poste
+      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apk add --no-cache jq openssl >/dev/null || exit 1
+        log() { echo "$$(date -u +%FT%TZ) $$*"; }
+        copiar() {
+          acme=/traefik/acme.json
+          [ -r "$$acme" ] || { log "não achei $$acme"; return; }
+          [ -d /poste/ssl ] || { log "não achei a pasta ssl do poste.io em /poste/ssl"; return; }
+          sel='[.[]?.Certificates[]? | select(.domain.main==$$d)][0]'
+          cert=$$(jq -r --arg d "$$DOMINIO" "$$sel.certificate // empty" "$$acme")
+          chave=$$(jq -r --arg d "$$DOMINIO" "$$sel.key // empty" "$$acme")
+          [ -n "$$cert" ] && [ -n "$$chave" ] || { log "o Traefik não tem certificado para $$DOMINIO"; return; }
+          echo "$$cert" | base64 -d > /tmp/cadeia.pem
+          echo "$$chave" | base64 -d > /tmp/chave.pem
+          openssl x509 -in /tmp/cadeia.pem -noout -checkend 0 >/dev/null || { log "certificado do Traefik vencido"; return; }
+          if cmp -s /tmp/cadeia.pem /poste/ssl/server.crt && cmp -s /tmp/chave.pem /poste/ssl/server.key; then
+            log "certificado em dia: $$(openssl x509 -in /tmp/cadeia.pem -noout -enddate)"
+            return
+          fi
+          # server.crt com a cadeia completa; ca.crt só com os intermediários
+          awk 'n>0{print} /END CERTIFICATE/{n++}' /tmp/cadeia.pem > /tmp/ca.pem
+          mkdir -p /poste/ssl/anterior && cp -a /poste/ssl/server.crt /poste/ssl/server.key /poste/ssl/ca.crt /poste/ssl/anterior/ 2>/dev/null
+          install -m 644 /tmp/cadeia.pem /poste/ssl/server.crt
+          install -m 600 /tmp/chave.pem /poste/ssl/server.key
+          install -m 644 /tmp/ca.pem /poste/ssl/ca.crt
+          log "certificado novo gravado: $$(openssl x509 -in /tmp/cadeia.pem -noout -subject -enddate | tr '\n' ' ')"
+          if docker service update --force --detach "$$SERVICO_POSTE" >/dev/null; then log "poste.io reiniciado"; else log "não consegui reiniciar $$SERVICO_POSTE"; fi
+        }
+        while true; do copiar; sleep "$$INTERVALO"; done
+    deploy:
+      resources:
+        limits:
+          memory: 64M

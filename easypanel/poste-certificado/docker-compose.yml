@@ -62,8 +62,9 @@ services:
         for f in $$(find /poste/ssl -name '*.crt' -o -name '*.pem' 2>/dev/null | head -20); do
           echo "  $$f: $$(openssl x509 -in $$f -noout -subject -enddate 2>/dev/null | tr '\n' ' ')"
         done
-        log "porta 587 entrega: $$(echo QUIT | timeout 15 openssl s_client -starttls smtp -connect $$DOMINIO:587 -servername $$DOMINIO 2>/dev/null | openssl x509 -noout -subject -ext subjectAltName 2>/dev/null | tr '\n' ' ')"
-        while true; do copiar; sleep "$$INTERVALO"; done
+        porta587() { log "porta 587 entrega: $$(echo QUIT | timeout 15 openssl s_client -starttls smtp -connect $$DOMINIO:587 -servername $$DOMINIO 2>/dev/null | openssl x509 -noout -subject -ext subjectAltName 2>/dev/null | tr '\n' ' ')"; }
+        porta587
+        while true; do copiar; sleep 90; porta587; sleep "$$INTERVALO"; done
     deploy:
       resources:
         limits:

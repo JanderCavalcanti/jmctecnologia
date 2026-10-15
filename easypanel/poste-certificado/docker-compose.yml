@@ -48,6 +48,12 @@ services:
           log "certificado novo gravado: $$(openssl x509 -in /tmp/cadeia.pem -noout -subject -enddate | tr '\n' ' ')"
           if docker service update --force --detach "$$SERVICO_POSTE" >/dev/null; then log "poste.io reiniciado"; else log "não consegui reiniciar $$SERVICO_POSTE"; fi
         }
+        # Diagnóstico na partida: arquivos de certificado do poste.io e o que a porta 587 entrega
+        log "arquivos em /poste/ssl:"; ls -laR /poste/ssl 2>&1 | head -40
+        for f in $$(find /poste/ssl -name '*.crt' -o -name '*.pem' 2>/dev/null | head -20); do
+          echo "  $$f: $$(openssl x509 -in $$f -noout -subject -enddate 2>/dev/null | tr '\n' ' ')"
+        done
+        log "porta 587 entrega: $$(echo QUIT | timeout 15 openssl s_client -starttls smtp -connect $$DOMINIO:587 -servername $$DOMINIO 2>/dev/null | openssl x509 -noout -subject -ext subjectAltName 2>/dev/null | tr '\n' ' ')"
         while true; do copiar; sleep "$$INTERVALO"; done
     deploy:
       resources:

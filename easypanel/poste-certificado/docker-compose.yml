@@ -35,24 +35,27 @@ services:
           echo "$$cert" | base64 -d > /tmp/cadeia.pem
           echo "$$chave" | base64 -d > /tmp/chave.pem
           openssl x509 -in /tmp/cadeia.pem -noout -checkend 0 >/dev/null || { log "certificado do Traefik vencido"; return; }
+          # Formato que o poste.io pede (ssl/README.md): server.crt só com o certificado do domínio,
+          # ca.crt com os intermediários e server.key no formato "BEGIN RSA PRIVATE KEY".
+          openssl x509 -in /tmp/cadeia.pem -out /tmp/server.pem
+          awk 'n>0{print} /END CERTIFICATE/{n++}' /tmp/cadeia.pem > /tmp/ca.pem
+          openssl rsa -in /tmp/chave.pem -traditional -out /tmp/chave-rsa.pem 2>/dev/null || { log "a chave do Traefik não é RSA"; return; }
           # Os arquivos precisam ser do mesmo dono da pasta (usuário mail do poste.io), senão ele não lê a chave
           dono=$$(stat -c %u:%g /poste/ssl)
           mudou=0
-          if ! cmp -s /tmp/cadeia.pem /poste/ssl/server.crt || ! cmp -s /tmp/chave.pem /poste/ssl/server.key; then
-            # server.crt com a cadeia completa; ca.crt só com os intermediários
-            awk 'n>0{print} /END CERTIFICATE/{n++}' /tmp/cadeia.pem > /tmp/ca.pem
+          if ! cmp -s /tmp/server.pem /poste/ssl/server.crt || ! cmp -s /tmp/chave-rsa.pem /poste/ssl/server.key || ! cmp -s /tmp/ca.pem /poste/ssl/ca.crt; then
             mkdir -p /poste/ssl/anterior && cp -a /poste/ssl/server.crt /poste/ssl/server.key /poste/ssl/ca.crt /poste/ssl/anterior/ 2>/dev/null
-            install -m 644 /tmp/cadeia.pem /poste/ssl/server.crt
-            install -m 600 /tmp/chave.pem /poste/ssl/server.key
+            install -m 644 /tmp/server.pem /poste/ssl/server.crt
+            install -m 600 /tmp/chave-rsa.pem /poste/ssl/server.key
             install -m 644 /tmp/ca.pem /poste/ssl/ca.crt
-            log "certificado novo gravado: $$(openssl x509 -in /tmp/cadeia.pem -noout -subject -enddate | tr '\n' ' ')"
+            log "certificado novo gravado: $$(openssl x509 -in /tmp/server.pem -noout -subject -enddate | tr '\n' ' ')"
             mudou=1
           fi
           for f in server.crt server.key ca.crt; do
             if [ "$$(stat -c %u:%g /poste/ssl/$$f)" != "$$dono" ]; then chown "$$dono" /poste/ssl/$$f; mudou=1; fi
           done
           if [ "$$mudou" = 0 ]; then
-            log "certificado em dia: $$(openssl x509 -in /tmp/cadeia.pem -noout -enddate)"
+            log "certificado em dia: $$(openssl x509 -in /tmp/server.pem -noout -enddate)"
             return
           fi
           if docker service update --force --detach "$$SERVICO_POSTE" >/dev/null; then log "poste.io reiniciado"; else log "não consegui reiniciar $$SERVICO_POSTE"; fi

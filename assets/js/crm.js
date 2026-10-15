@@ -1,7 +1,7 @@
 // Mini CRM da Área do cliente: status das propostas no Supabase (Postgres).
 // Cliente vê só as propostas ligadas ao próprio e-mail; administradores (tabela "admins")
 // cadastram propostas e mudam a etapa. Quem garante isso são as regras em supabase/schema.sql.
-import { pedirCadastro, mascaraDocumento, mascaraTelefone } from './cadastro.js';
+import { pedirCadastro, salvarCadastroPendente, mascaraDocumento, mascaraTelefone } from './cadastro.js';
 
 export const ETAPAS = [
   { chave: 'proposta', nome: 'Proposta comercial', status: 'Proposta comercial em análise' },
@@ -92,7 +92,12 @@ export async function iniciarCRM(sb, user) {
   // Primeiro acesso: o cliente preenche o cadastro antes de ver o painel.
   const { data: existente, error } = await sb.from('clientes').select('*').eq('id', user.id).maybeSingle();
   if (error) throw error;
-  let cadastro = existente || (await pedirCadastro(sb, user, null));
+  // Conta com e-mail: o cadastro veio junto na criação da conta e é gravado agora.
+  let cadastro = existente || (await salvarCadastroPendente(sb, user));
+  if (!cadastro) {
+    const pendente = user.user_metadata?.cadastro || null;
+    cadastro = await pedirCadastro(sb, user, pendente, { primeiroAcesso: !!pendente });
+  }
   painel.hidden = false;
 
   const editar = async () => {

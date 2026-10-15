@@ -80,11 +80,27 @@ services:
       GOTRUE_JWT_EXP: ${JWT_EXPIRY}
       GOTRUE_JWT_SECRET: ${JWT_SECRET}
       GOTRUE_JWT_ISSUER: ${SUPABASE_PUBLIC_URL}/auth/v1
-      # Só login social: sem cadastro por e-mail/senha, telefone ou anônimo.
-      GOTRUE_EXTERNAL_EMAIL_ENABLED: "false"
+      # Login com Google e com e-mail e senha (com confirmação por e-mail). Sem telefone nem anônimo.
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
+      GOTRUE_EXTERNAL_EMAIL_MAGIC_LINK_ENABLED: "false"
       GOTRUE_EXTERNAL_PHONE_ENABLED: "false"
       GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED: "false"
       GOTRUE_MAILER_AUTOCONFIRM: "false"
+      GOTRUE_MAILER_OTP_EXP: 86400
+      GOTRUE_PASSWORD_MIN_LENGTH: 8
+      GOTRUE_PASSWORD_REQUIRED_CHARACTERS: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ:0123456789"
+      # Envio de e-mails (confirmação de conta e nova senha) pelo servidor de e-mail da JMC
+      GOTRUE_SMTP_HOST: ${SMTP_HOST:-}
+      GOTRUE_SMTP_PORT: ${SMTP_PORT:-587}
+      GOTRUE_SMTP_USER: ${SMTP_USER:-}
+      GOTRUE_SMTP_PASS: ${SMTP_PASS:-}
+      GOTRUE_SMTP_ADMIN_EMAIL: ${SMTP_ADMIN_EMAIL:-}
+      GOTRUE_SMTP_SENDER_NAME: JMC Tecnologia e Consultoria
+      GOTRUE_MAILER_SUBJECTS_CONFIRMATION: Confirme o seu e-mail na Área do cliente JMC
+      GOTRUE_MAILER_SUBJECTS_RECOVERY: Crie uma nova senha na Área do cliente JMC
+      # Modelos em português servidos pelo gateway (veja /emails/ no gateway abaixo)
+      GOTRUE_MAILER_TEMPLATES_CONFIRMATION: http://gateway/emails/confirmacao.html
+      GOTRUE_MAILER_TEMPLATES_RECOVERY: http://gateway/emails/nova-senha.html
       GOTRUE_EXTERNAL_GOOGLE_ENABLED: ${GOOGLE_ENABLED}
       GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOTRUE_EXTERNAL_GOOGLE_SECRET: ${GOOGLE_SECRET}
@@ -212,6 +228,31 @@ services:
       - -c
       - |
         echo "$$DASHBOARD_HTPASSWD_B64" | base64 -d > /etc/nginx/painel.htpasswd
+        mkdir -p /usr/share/nginx/emails
+        cat > /usr/share/nginx/emails/confirmacao.html <<'EMAIL'
+        <!doctype html><html lang="pt-BR"><body style="margin:0;background:#f7f5f2;font-family:Arial,Helvetica,sans-serif;color:#1f1f1f">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f7f5f2;padding:32px 16px"><tr><td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border:1px solid #e7e2dc;border-radius:14px">
+        <tr><td style="padding:28px 32px 0"><strong style="font-size:18px;color:#404040">JMC Tecnologia e Consultoria</strong></td></tr>
+        <tr><td style="padding:16px 32px 8px"><h1 style="margin:0 0 12px;font-size:22px">Confirme o seu e-mail</h1>
+        <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#555555">Recebemos o seu cadastro na Área do cliente da JMC. Clique no botão abaixo para ativar a sua conta. O link vale por 24 horas.</p>
+        <a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email" style="display:inline-block;background:#ff9900;color:#1f1f1f;font-weight:bold;font-size:15px;text-decoration:none;padding:13px 26px;border-radius:999px">Confirmar e-mail</a>
+        <p style="margin:24px 0 0;font-size:13px;line-height:1.6;color:#555555">Se você não criou uma conta na JMC, ignore este e-mail.</p></td></tr>
+        <tr><td style="padding:16px 32px 28px;font-size:12px;color:#888888">Este e-mail foi enviado para {{ .Email }} pela Área do cliente da JMC. Não responda esta mensagem.</td></tr>
+        </table></td></tr></table></body></html>
+        EMAIL
+        cat > /usr/share/nginx/emails/nova-senha.html <<'EMAIL'
+        <!doctype html><html lang="pt-BR"><body style="margin:0;background:#f7f5f2;font-family:Arial,Helvetica,sans-serif;color:#1f1f1f">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f7f5f2;padding:32px 16px"><tr><td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border:1px solid #e7e2dc;border-radius:14px">
+        <tr><td style="padding:28px 32px 0"><strong style="font-size:18px;color:#404040">JMC Tecnologia e Consultoria</strong></td></tr>
+        <tr><td style="padding:16px 32px 8px"><h1 style="margin:0 0 12px;font-size:22px">Crie uma nova senha</h1>
+        <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#555555">Recebemos um pedido para trocar a senha da sua conta na Área do cliente da JMC. Clique no botão abaixo para criar uma nova senha. O link vale por 24 horas.</p>
+        <a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=recovery" style="display:inline-block;background:#ff9900;color:#1f1f1f;font-weight:bold;font-size:15px;text-decoration:none;padding:13px 26px;border-radius:999px">Criar nova senha</a>
+        <p style="margin:24px 0 0;font-size:13px;line-height:1.6;color:#555555">Se você não pediu a troca de senha, ignore este e-mail. A sua senha atual continua valendo.</p></td></tr>
+        <tr><td style="padding:16px 32px 28px;font-size:12px;color:#888888">Este e-mail foi enviado para {{ .Email }} pela Área do cliente da JMC. Não responda esta mensagem.</td></tr>
+        </table></td></tr></table></body></html>
+        EMAIL
         cat > /etc/nginx/conf.d/default.conf <<'NGINX'
         map $$http_upgrade $$connection_upgrade { default upgrade; '' close; }
         server {
@@ -235,6 +276,9 @@ services:
             proxy_set_header Host realtime-dev.supabase-realtime;
             proxy_read_timeout 3600s;
             proxy_pass http://realtime:4000/socket/;
+          }
+          location /emails/ {
+            root /usr/share/nginx;
           }
           location / {
             auth_basic "Supabase JMC";
